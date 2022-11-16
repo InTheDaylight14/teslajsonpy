@@ -570,10 +570,15 @@ class TeslaCar:
             "off_peak_charging_enabled"
         )
 
-    @property
-    def off_peak_charging_times(self) -> str:
+	@property
+    def off_peak_charging_weekend_only(self) -> bool:
         """Return off peak charging times."""
-        return self._vehicle_data.get("charge_state", {}).get("off_peak_charging_times")
+        if (
+            self._vehicle_data.get("charge_state", {}).get("off_peak_charging_times")
+            == "all_week"
+        ):
+            return False
+        return True
 
     @property
     def off_peak_hours_end_time(self) -> int:
@@ -586,13 +591,18 @@ class TeslaCar:
         return self._vehicle_data.get("charge_state", {}).get("preconditioning_enabled")
 
     @property
-    def preconditioning_times(self) -> str:
+    def preconditioning_weekend_only(self) -> bool:
         """Return if preconditioning is weekend only."""
-        return self._vehicle_data.get("charge_state", {}).get("preconditioning_times")
+        if (
+            self._vehicle_data.get("charge_state", {}).get("preconditioning_times")
+            == "all_week"
+        ):
+            return False
+        return True
 
     @property
     def scheduled_charging_mode(self) -> str:
-        """Return if scheduled charging is enabled."""
+        """Return 'Off', 'DepartBy', or 'StartAt' for schedule disabled, scheduled departure, and scheduled charging respectively."""
         return self._vehicle_data.get("charge_state", {}).get("scheduled_charging_mode")
 
     @property
@@ -608,18 +618,6 @@ class TeslaCar:
         return self._vehicle_data.get("charge_state", {}).get(
             "scheduled_charging_start_time_app"
         )
-
-    @property
-    def is_window_closed(self) -> bool:
-        """Return all car windows are close."""
-        if (
-            self._vehicle_data.get("vehicle_state", {}).get("fd_window")
-            or self._vehicle_data.get("vehicle_state", {}).get("fp_window")
-            or self._vehicle_data.get("vehicle_state", {}).get("rd_window")
-            or self._vehicle_data.get("vehicle_state", {}).get("rp_window")
-        ):
-            return False
-        return True
 
     async def _send_command(
         self, name: str, *, path_vars: dict, wake_if_asleep: bool = False, **kwargs
@@ -839,7 +837,6 @@ class TeslaCar:
                 mode_str = "Off"
             params = {
                 "scheduled_charging_mode": mode_str,
-                "scheduled_charging_start_time_app": time,
             }
             self._vehicle_data["charge_state"].update(params)
 
@@ -1106,4 +1103,42 @@ class TeslaCar:
         )
         if data and data["response"]["result"] is True:
             params = {"locked": False}
+            self._vehicle_data["vehicle_state"].update(params)
+
+    async def vent_windows(self) -> None:
+        """Vent Windows."""
+        data = await self._send_command(
+            "WINDOW_CONTROL",
+            path_vars={"vehicle_id": self.id},
+            command="vent",
+            lat=0,
+            long=0,
+            wake_if_asleep=True,
+        )
+        if data and data["response"]["result"] is True:
+            params = {
+                "fd_window": 1,
+                "fp_window": 1,
+                "rd_window": 1,
+                "rp_window": 1,
+            }
+            self._vehicle_data["vehicle_state"].update(params)
+
+    async def close_windows(self) -> None:
+        """Close Windows."""
+        data = await self._send_command(
+            "WINDOW_CONTROL",
+            path_vars={"vehicle_id": self.id},
+            command="close",
+            lat=self.latitude,
+            long=self.longitude,
+            wake_if_asleep=True,
+        )
+        if data and data["response"]["result"] is True:
+            params = {
+                "fd_window": 0,
+                "fp_window": 0,
+                "rd_window": 0,
+                "rp_window": 0,
+            }
             self._vehicle_data["vehicle_state"].update(params)
