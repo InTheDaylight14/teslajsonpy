@@ -215,8 +215,6 @@ async def test_car_properties(monkeypatch):
         == VEHICLE_DATA["charge_state"]["scheduled_charging_start_time_app"]
     )
 
-    assert _car.is_window_closed
-
     assert _car.longitude == VEHICLE_DATA["drive_state"]["longitude"]
 
     assert _car.latitude == VEHICLE_DATA["drive_state"]["latitude"]
@@ -545,3 +543,27 @@ async def test_unlock(monkeypatch):
     _car = _controller.cars[VIN]
 
     assert await _car.unlock() is None
+
+
+@pytest.mark.asyncio
+async def test_vent_windows(monkeypatch):
+    """Test vent windows."""
+    TeslaMock(monkeypatch)
+    _controller = Controller(None)
+    await _controller.connect()
+    await _controller.generate_car_objects()
+    _car = _controller.cars[VIN]
+
+    assert await _car.vent_windows() is None
+
+
+@pytest.mark.asyncio
+async def test_close_windows(monkeypatch):
+    """Test close windows."""
+    TeslaMock(monkeypatch)
+    _controller = Controller(None)
+    await _controller.connect()
+    await _controller.generate_car_objects()
+    _car = _controller.cars[VIN]
+
+    assert await _car.close_windows() is None
