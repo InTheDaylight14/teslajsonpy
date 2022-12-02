@@ -570,31 +570,31 @@ class TeslaCar:
 
     @property
     def is_off_peak_charging_enabled(self) -> bool:
-        """Return if peak charging is enabled."""
+        """Return if peak charging is enabled for scheduled departure."""
         return self._vehicle_data.get("charge_state", {}).get(
             "off_peak_charging_enabled"
         )
 
     @property
     def is_off_peak_charging_weekday_only(self) -> bool:
-        """Return if off peak charging is weekday only."""
+        """Return if off off peak charging is weekday only for scheduled departure."""
         return DAY_SELECTION_MAP.get(
             self._vehicle_data.get("charge_state", {}).get("off_peak_charging_times")
         )
 
     @property
     def off_peak_hours_end_time(self) -> int:
-        """Return end of off peak hours in minutes after midnight."""
+        """Return end of off peak hours in minutes after midnight for scheduled departure."""
         return self._vehicle_data.get("charge_state", {}).get("off_peak_hours_end_time")
 
     @property
     def is_preconditioning_enabled(self) -> bool:
-        """Return if preconditioning is enabled."""
+        """Return if preconditioning is enabled for scheduled departure."""
         return self._vehicle_data.get("charge_state", {}).get("preconditioning_enabled")
 
     @property
     def is_preconditioning_weekday_only(self) -> bool:
-        """Return if preconditioning is weekday only."""
+        """Return if preconditioning is weekday only for scheduled departure."""
         return DAY_SELECTION_MAP.get(
             self._vehicle_data.get("charge_state", {}).get("preconditioning_times")
         )
@@ -606,7 +606,7 @@ class TeslaCar:
 
     @property
     def is_scheduled_charging_pending(self) -> bool:
-        """Return if preconditioning is enabled."""
+        """Return if scheduled charging is pending."""
         return self._vehicle_data.get("charge_state", {}).get(
             "scheduled_charging_pending"
         )
@@ -824,7 +824,7 @@ class TeslaCar:
             self._vehicle_data["charge_state"].update(params)
 
     async def set_scheduled_charging(self, enable: bool, time: int) -> None:
-        """Send command to set charging time.
+        """Send command to set scheduled charging time.
 
         Args
             enable: Turn on (True) or turn off (False) the scheduled charging.
