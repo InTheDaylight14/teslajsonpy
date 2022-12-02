@@ -29,6 +29,11 @@ SEAT_ID_MAP = {
     7: "third_row_right",
 }
 
+DAY_SELECTION_MAP = {
+    "all_week": False,
+    "weekdays": True,
+}
+
 
 class TeslaCar:
     #  pylint: disable=too-many-public-methods
@@ -570,15 +575,12 @@ class TeslaCar:
             "off_peak_charging_enabled"
         )
 
-	@property
-    def off_peak_charging_weekend_only(self) -> bool:
-        """Return off peak charging times."""
-        if (
+    @property
+    def is_off_peak_charging_weekday_only(self) -> bool:
+        """Return if off peak charging is weekday only."""
+        return DAY_SELECTION_MAP.get(
             self._vehicle_data.get("charge_state", {}).get("off_peak_charging_times")
-            == "all_week"
-        ):
-            return False
-        return True
+        )
 
     @property
     def off_peak_hours_end_time(self) -> int:
@@ -591,14 +593,11 @@ class TeslaCar:
         return self._vehicle_data.get("charge_state", {}).get("preconditioning_enabled")
 
     @property
-    def preconditioning_weekend_only(self) -> bool:
-        """Return if preconditioning is weekend only."""
-        if (
+    def is_preconditioning_weekday_only(self) -> bool:
+        """Return if preconditioning is weekday only."""
+        return DAY_SELECTION_MAP.get(
             self._vehicle_data.get("charge_state", {}).get("preconditioning_times")
-            == "all_week"
-        ):
-            return False
-        return True
+        )
 
     @property
     def scheduled_charging_mode(self) -> str:
@@ -805,12 +804,22 @@ class TeslaCar:
 
         if data and data["response"]["result"] is True:
             if enable:
-                mode_str = "StartAt"
+                mode_str = "DepartBy"
             else:
                 mode_str = "Off"
 
             params = {
                 "scheduled_charging_mode": mode_str,
+                "scheduled_departure_time_minutes": departure_time,
+                "preconditioning_enabled": preconditioning_enabled,
+                "preconditioning_weekdays_only": list(DAY_SELECTION_MAP.values()).index(
+                    preconditioning_weekdays_only
+                ),
+                "off_peak_charging_enabled": off_peak_charging_enabled,
+                "off_peak_charging_weekdays_only": list(
+                    DAY_SELECTION_MAP.values()
+                ).index(off_peak_charging_weekdays_only),
+                "end_off_peak_time": end_off_peak_time,
             }
             self._vehicle_data["charge_state"].update(params)
 
@@ -835,8 +844,11 @@ class TeslaCar:
                 mode_str = "StartAt"
             else:
                 mode_str = "Off"
+                time = None
             params = {
                 "scheduled_charging_mode": mode_str,
+                "scheduled_charging_start_time": time,
+                "scheduled_charging_pending": enable,
             }
             self._vehicle_data["charge_state"].update(params)
 

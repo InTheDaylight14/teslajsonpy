@@ -10,6 +10,11 @@ from tests.tesla_mock import (
     VIN,
 )
 
+DAY_SELECTION_MAP = {
+    "all_week": False,
+    "weekdays": True,
+}
+
 
 @pytest.mark.asyncio
 async def test_car_properties(monkeypatch):
@@ -183,9 +188,8 @@ async def test_car_properties(monkeypatch):
 
     assert _car.is_off_peak_charging_enabled
 
-    assert (
-        _car.off_peak_charging_times
-        == VEHICLE_DATA["charge_state"]["off_peak_charging_times"]
+    assert _car.is_off_peak_charging_weekday_only == DAY_SELECTION_MAP.get(
+        VEHICLE_DATA["charge_state"]["off_peak_charging_times"]
     )
 
     assert (
@@ -195,9 +199,8 @@ async def test_car_properties(monkeypatch):
 
     assert _car.is_preconditioning_enabled is False
 
-    assert (
-        _car.preconditioning_times
-        == VEHICLE_DATA["charge_state"]["preconditioning_times"]
+    assert _car.is_preconditioning_weekday_only == DAY_SELECTION_MAP.get(
+        VEHICLE_DATA["charge_state"]["preconditioning_times"]
     )
 
     assert (
